@@ -20,7 +20,6 @@ defmodule NihApiWrapper.NihApiClient do
     # ....
     # get the last question
     # send the response
-
   end
 
   # In some other module in a galaxy far away
@@ -31,31 +30,24 @@ defmodule NihApiWrapper.NihApiClient do
     # end
   # end
 
+@doc """
+ Fetches specific assessment form, identified by OID. returns an assessment token.
+  """
   def create_assessment(oid) do
     with {:ok, response} <- api_get_request("2014-01/Assessments/#{oid}.json") do
-      Jason.decode!(response.body)
+Jason.decode!(response.body)
+
     else
       {:error, reason} ->
         {:error, reason}
     end
   end
 
+  @doc """
+  uses assessment token to either administer an assessment or continue an assessment, depending on if the DateFinished property returns an empty string or not.
+  """
   def next_question(assessment_token) do
-
-  end
-
-  def send_response(assessment_token, item_response_oid, response_value ) do
-
-  end
-
-  def retrieve_scored_assessment(assessment_token) do
-
-  end
-
-
-
-  def get_all_forms() do
-    with {:ok, response} <- api_get_request("/2014-01/Form/.json") do
+    with {:ok, response} <- api_get_request("2014-01/Participants/#{assessment_token}.json") do
       Jason.decode!(response.body)
     else
       {:error, reason} ->
@@ -63,6 +55,46 @@ defmodule NihApiWrapper.NihApiClient do
     end
   end
 
+
+  @doc """
+  sends the response of each question in the assessment with question oid and the value of the response chosen.
+  """
+  def send_response(assessment_token, item_response_oid, response_value ) do
+    with {:ok, response} <- api_get_request("2014-01/Participants/#{assessment_token}.json?ItemResponseOID=#{item_response_oid}&Response=#{response_value})") do
+      Jason.decode!(response.body)
+    else
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Sends the assessment item values to be scored.
+  """
+  def retrieve_scored_assessment(assessment_token) do
+    with {:ok, response} <- api_get_request("2014-01/Results/#{assessment_token}.json") do
+      Jason.decode!(response.body)
+    else
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc"""
+  fetches all NIH forms.
+  """
+  def get_all_forms() do
+    with {:ok, response} <- api_get_request("/2014-01/Forms/.json") do
+      Jason.decode!(response.body)
+    else
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc"""
+  the body of a get request with a base url that can be used for every function that requires it.
+  """
   def api_get_request(url, error_msg \\ "Unexpected response ") do
     case get(url) do
       {:ok, %Tesla.Env{status: 200} = response} ->
@@ -76,6 +108,9 @@ defmodule NihApiWrapper.NihApiClient do
     end
   end
 
+  @doc"""
+  the body of a post request with a base url that can be used for every function that requires it.
+  """
   def api_post_request(url, body, error_msg \\ "Unexpected response ") do
     case post(url, body) do
       {:ok, %Tesla.Env{status: 200} = response} ->

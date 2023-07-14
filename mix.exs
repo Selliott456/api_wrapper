@@ -7,6 +7,7 @@ defmodule NihApiWrapper.MixProject do
       version: "0.1.0",
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
+      escript: escript_config(),
       deps: deps()
     ]
   end
@@ -28,5 +29,9 @@ defmodule NihApiWrapper.MixProject do
       {:hackney, "~> 1.17"},
       {:jason, ">= 1.0.0"}
     ]
+  end
+
+  def escript_config do
+    [main_module: NihApiWrapper.Commandline]
   end
 end

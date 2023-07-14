@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # NihApiWrapper
 
 **TODO: Add description**
@@ -19,3 +20,6 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/nih_api_wrapper>.
 
+=======
+# api_wrapper
+>>>>>>> f50c28e (Initial commit)
