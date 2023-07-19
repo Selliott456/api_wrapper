@@ -51,7 +51,7 @@ Jason.decode!(response.body)
       Jason.decode!(response.body)
     else
       {:error, reason} ->
-        {:error, reason}
+        %{"DateFinished" => "2/13/2017 3:02:41 PM","Items" => []}
     end
   end
 

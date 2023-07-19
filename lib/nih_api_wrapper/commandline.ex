@@ -52,6 +52,7 @@ fetches all forms and displays the top 5 results (so not to have to deal with al
     assessment = NAC.create_assessment(oid)
     assessment_token = assessment["OID"]
 
+
     assessment_token
   end
 
@@ -62,12 +63,13 @@ fetches all forms and displays the top 5 results (so not to have to deal with al
   def administer_question (assessment_token) do
     %{"DateFinished" => date_finished, "Items" => items} = NAC.next_question(assessment_token)
 
-    get_question_elements(items)
-    |> display_question()
-    |> parse_and_send_response(assessment_token)
-
     case date_finished do
-      "" -> administer_question(assessment_token)
+      "" ->
+        get_question_elements(items)
+        |> display_question()
+        |> parse_and_send_response(assessment_token)
+#
+        administer_question(assessment_token)
       _ -> nil
     end
   end
@@ -79,37 +81,45 @@ and answer. The answer is always last, and the prompts
 come in one or two parts, answer is taken off as first
 item after reversing.
 """
-  def get_question_elements(items) do
 
+# YOU NEED TWO OF THESE
+  def get_question_elements(items) do
     item =  Enum.at(items, 0)
     elements = item["Elements"]
     |> Enum.reverse()
+    # [answers, question] = elements
 
-    [answers, question] = elements
+    case length(elements) do
+      2 -> [answers, question] = elements
+      {answers, question}
+      _ -> [answers, question2, question1] = elements
+      {answers, [question1, question2]}
+    end
 
-    {question, answers}
   end
 
   @doc """
   Displays the prompts and answers and captures a users response
   as a ~c"raw_response"
   """
-  def display_question({question, answers}) do
-    IO.puts(question["Description"])
 
-    # case question do
-      # is_list -> question
-      # |>Enum.reverse()
-      # |> Enum.map(fn item -> IO.puts (item["Description"]) end)
-      # _ -> IO.puts(question["Description"])
-    # end
-
-    # ^ see Steven
+  def display_question({answers, [question1, question2]}) do
+    IO.puts("#{question1}\n #{question2}")
 
     raw_response = IO.gets(Enum.map(answers["Map"], fn(answer)-> "#{answer["Position"]} - #{answer["Description"]} \n" end ))
 
     {raw_response, answers}
   end
+
+  def display_question({answers, question}) do
+    IO.puts(question["Description"])
+
+    raw_response = IO.gets(Enum.map(answers["Map"], fn(answer)-> "#{answer["Position"]} - #{answer["Description"]} \n" end ))
+
+    {raw_response, answers}
+  end
+
+
 
   @doc"""
   parses the user response and finds the answer that matches.
