@@ -8,34 +8,12 @@ defmodule NihApiWrapper.NihApiClient do
     username: "E311151C-D7CE-431C-BDF5-C6E7E2161F10",
     password: "3574FC35-6E21-405A-AF10-87ECBEEE8837"
 
-  @adapter Tesla.Adapter.Hackney
-
-  def administer_survey() do
-    # create the assessment
-    # get the first question
-    # display the first question
-    # get the user's response
-    # send the response
-    # get the next question
-    # ....
-    # get the last question
-    # send the response
-  end
-
-  # In some other module in a galaxy far away
-  # def administer_question(oid) do
-    # with {:ok, next_question} <- next_question(oid) do
-      # response = get_user_response(next_question)
-      # send_response(response)
-    # end
-  # end
-
 @doc """
  Fetches specific assessment form, identified by OID. returns an assessment token.
   """
   def create_assessment(oid) do
     with {:ok, response} <- api_get_request("2014-01/Assessments/#{oid}.json") do
-Jason.decode!(response.body)
+    Jason.decode!(response.body)
 
     else
       {:error, reason} ->

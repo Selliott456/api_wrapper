@@ -1,6 +1,9 @@
 defmodule NihApiWrapper.Commandline do
   alias NihApiWrapper.NihApiClient, as: NAC
 
+
+
+
   def main() do
     assessment_token =
       display_forms()
@@ -14,39 +17,35 @@ defmodule NihApiWrapper.Commandline do
 
 
 @doc"""
-fetches all forms and displays the top 5 results (so not to have to deal with all of them)
+displays requested forms
 """
   def display_forms() do
-    form_list = NAC.get_all_forms()["Form"]
-    display_list = form_list
-    |> Enum.map(fn form -> "#{form["Name"]}\n" end )
-    |> Enum.take(5)
 
     display_list = ["PROMIS Bank v2.0 - Physical Function (recommended)\n",
       "PROMIS Bank v2.1 - Upper Extremity (recommended)\n",
       "PROMIS Bank v1.1 - Pain Interference (recommended)\n",
       "PROMIS Bank v1.0 - Anxiety\n"]
-      IO.puts(display_list)
-  #   IO.inspect(display_list)
-    {display_list, form_list}
+
+    IO.puts(display_list)
+    display_list
   end
 
   @doc """
   allows user to select a form by number and finds form name using it as index
   """
 
-  def select_form({display_list, form_list}) do
+  def select_form(display_list) do
+    form_list = NAC.get_all_forms()["Form"]
     form_number = IO.gets("ENTER FORM NUMBER\n")
     |> to_string()
     |> String.trim("\n")
     |> String.to_integer()
 
-    form_index = form_number - 1
-    form_name = Enum.at(display_list, form_index)
-    |> String.trim("\n")
+    handle_errors({form_number, form_list}, display_list)
 
-    {form_name, form_list}
+
   end
+
 
   @doc"""
   takes the from/assessment oid and creates an instance of it,
@@ -57,7 +56,6 @@ fetches all forms and displays the top 5 results (so not to have to deal with al
 
     assessment = NAC.create_assessment(oid)
     assessment_token = assessment["OID"]
-
 
     assessment_token
   end
@@ -83,9 +81,7 @@ fetches all forms and displays the top 5 results (so not to have to deal with al
 
 @doc"""
 Breaks down the elements of the question into a prompt
-and answer. The answer is always last, and the prompts
-come in one or two parts, answer is taken off as first
-item after reversing.
+and answer. The answer is the last item in `items`.
 """
 
   def get_question_elements(items) do
@@ -106,31 +102,60 @@ item after reversing.
     Enum.map(question, fn question -> IO.puts(question["Description"]) end)
 
     raw_response = IO.gets(Enum.map(answers["Map"], fn(answer)-> "#{answer["Position"]} - #{answer["Description"]} \n" end ))
-#
-    {raw_response, answers}
+    response_number =  raw_response
+    |> to_string()
+    |> String.at(0)
+
+    handle_errors(response_number, answers, question)
   end
 
   @doc"""
   parses the user response and finds the answer that matches.
   Then sends it to API as an ItemResponseOID and a value
   """
-  def parse_and_send_response({raw_response, answers}, assessment_token) do
-    response_number =  raw_response
-    |> to_string()
-    |> String.at(0)
-
+  def parse_and_send_response({response_number, answers, question}, assessment_token) do
     %{
       "ItemResponseOID" => item_response_oid,
       "Value" => response_value
     } = Enum.find(answers["Map"], fn map -> map["Position"] == response_number end)
     NAC.send_response(assessment_token, item_response_oid, response_value)
+
   end
 
   @doc"""
-  posts completed survey to API. Currently blows up.... I think I've done the post request wrong but I cant see how.
+  posts completed survey to API. Returns results object.
   """
   def get_results(assessment_token) do
     NAC.retrieve_scored_assessment(assessment_token)
+  end
+
+  @doc """
+  handles for selection errors
+  """
+  def handle_errors({form_number, form_list} , display_list) do
+    unless form_number < 1 or form_number > length(display_list) + 1 do
+      form_index = form_number - 1
+      form_name = Enum.at(display_list, form_index)
+      |> String.trim("\n")
+
+      {form_name, form_list}
+    else
+      IO.puts("INCORRECT SELECTION - FORM DOES NOT EXIST")
+      select_form(display_list)
+    end
+  end
+
+
+  @doc """
+  handles question response errors
+  """
+  def handle_errors(response_number, answers, question) do
+    unless String.to_integer(response_number) > 5 or String.to_integer(response_number) < 1 do
+      {response_number, answers, question}
+    else
+      IO.puts("INVALID RESPONSE")
+    display_question({answers, question})
+    end
   end
 
 end
