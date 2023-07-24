@@ -22,13 +22,19 @@ fetches all forms and displays the top 5 results (so not to have to deal with al
     |> Enum.map(fn form -> "#{form["Name"]}\n" end )
     |> Enum.take(5)
 
-    IO.puts(display_list)
+    display_list = ["PROMIS Bank v2.0 - Physical Function (recommended)\n",
+      "PROMIS Bank v2.1 - Upper Extremity (recommended)\n",
+      "PROMIS Bank v1.1 - Pain Interference (recommended)\n",
+      "PROMIS Bank v1.0 - Anxiety\n"]
+      IO.puts(display_list)
+  #   IO.inspect(display_list)
     {display_list, form_list}
   end
 
   @doc """
   allows user to select a form by number and finds form name using it as index
   """
+
   def select_form({display_list, form_list}) do
     form_number = IO.gets("ENTER FORM NUMBER\n")
     |> to_string()
@@ -82,20 +88,13 @@ come in one or two parts, answer is taken off as first
 item after reversing.
 """
 
-# YOU NEED TWO OF THESE
   def get_question_elements(items) do
     item =  Enum.at(items, 0)
     elements = item["Elements"]
     |> Enum.reverse()
-    # [answers, question] = elements
+    [answers | question] = elements
 
-    case length(elements) do
-      2 -> [answers, question] = elements
-      {answers, question}
-      _ -> [answers, question2, question1] = elements
-      {answers, [question1, question2]}
-    end
-
+    {answers, question}
   end
 
   @doc """
@@ -103,23 +102,13 @@ item after reversing.
   as a ~c"raw_response"
   """
 
-  def display_question({answers, [question1, question2]}) do
-    IO.puts("#{question1}\n #{question2}")
-
-    raw_response = IO.gets(Enum.map(answers["Map"], fn(answer)-> "#{answer["Position"]} - #{answer["Description"]} \n" end ))
-
-    {raw_response, answers}
-  end
-
   def display_question({answers, question}) do
-    IO.puts(question["Description"])
+    Enum.map(question, fn question -> IO.puts(question["Description"]) end)
 
     raw_response = IO.gets(Enum.map(answers["Map"], fn(answer)-> "#{answer["Position"]} - #{answer["Description"]} \n" end ))
-
+#
     {raw_response, answers}
   end
-
-
 
   @doc"""
   parses the user response and finds the answer that matches.
